@@ -1,0 +1,336 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Current Weather</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+    <link rel='stylesheet' href='/css/portfolio.css' />
+
+
+    <style>
+
+
+
+        .detail {
+            margin-bottom: 0.2rem;
+            width: 100%;
+            padding-left: 2.5rem;
+            color: black;
+            display: flex;
+        }
+
+
+        .fav {
+            width: 35%;
+            padding-top: 0.6rem;
+        }
+
+        .sdata {
+            width: 65%;
+            font-size: large;
+        }
+
+        #stHist {
+            padding-left: 2rem;
+        }
+
+        .titem {
+            padding-left: 0rem;
+        }
+
+        .tlab {
+            margin-left: 0.2rem;
+            margin-right: 0.5rem;
+            font-weight: bold;
+            color: #6a6b6c;
+        }
+
+        .sbuy {
+            padding-left: 3rem;
+        }
+
+
+        h3 {
+            background-color: #fdf9f6;
+        }
+
+        .slinks a, li>a {
+            color: #3c8dbc;
+            text-decoration: none;
+        }
+
+            .slinks a:hover, li > a:hover, .slinks a:active, li > a:active, .slinks a:focus, li>a:focus {
+                outline: none;
+                text-decoration: none;
+                color: #72afd2;
+            }
+
+            .slinks a:focus, li>a:focus {
+                outline: thin dotted;
+                outline: 5px auto -webkit-focus-ring-color;
+                outline-offset: -2px;
+            }
+
+            .slinks a:focus, li > a:focus, .slinks a:hover, li>a:hover {
+                color: #1da3d3;
+                /*text-decoration: underline;*/
+            }
+
+            .button{
+                font-size: medium;
+            }
+
+        #weather {
+            margin-left: 4rem;
+        }
+
+        .today {
+            align-self: flex-end;
+            /*font-size: smaller;
+            font-weight: normal;*/
+            position: absolute;
+            padding-right: 2rem;
+            /*color: #545758;*/
+        }
+        #addPortfolio {
+            display: flex;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="addPortfolio" class="box">
+        <form id="frmSearch" action="" method="get">
+            <input type="text" id="searchInput" name="newPortfolioName" autocomplete="off"
+                   title="Enter city" placeholder="Enter city" required="" minlength="3" style="min-width: 13rem;" />
+
+            <button id="search" type="submit" class="button">Search</button>
+        </form>
+        <div class="slinks" style="margin-left:2rem;margin-top:0.5rem"><a id="favorites" href="javascript:ShowFaforitesPage()">Favorites Page</a></div>
+    </div>
+    <div class="row1">
+        <div class="box fitem1">
+            <h3 id="pageName">Cities</h3>
+            <ol class="link-list">
+                <!--hparam1(-->
+                <!--<li><a data-portno="1" href="#">Tel Aviv</a></li>
+                <li><a data-portno="2" href="#">Telanaipura</a></li>
+                <li><a data-portno="3" href="#">Telok Blangah New Town</a></li>
+                <li><a data-portno="4" href="#">Telford</a></li>
+                <li><a data-portno="5" href="#">Telsiai</a></li>-->
+                <!--)hparam1-->
+            </ol> 
+        </div>
+        <div class="box fitem2">
+            <h3>Current Weather</h3>
+            <div style="margin-top:2.5rem;"></div>
+            <div class="detail">
+                <div class="sdata">
+                    <div id="weather">
+                        <label id="cityLb" data-cityKey="" class="tlab"></label> <!--Tel Aviv--><br><br>
+                        <label id="celsiusLb" class="tlab"></label><!--38--> <label id="weatherLb" class="tlab"></label><!--Sunny-->
+                    </div>
+                </div>
+                <div class="fav">
+                    <!--<a id="sbuy" class="sbuy" href="">Buy</a>-->
+                    <button id="addToFavorites" type="button" class="button">Add to Favorites</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        "use strict";
+
+        var form = document.getElementById("frmSearch");
+
+        form.addEventListener("submit", async function (event) {
+            var frmvalid = validateForm(form)
+            event.preventDefault();
+
+            if (frmvalid) {
+                await Search();
+            }
+            else {
+                 alert('Wrong search input.');
+            }
+        });
+
+        function validateForm(frm) {
+            var valid = true;
+            for (var i = 0; i < frm.length; i++) {
+
+                if (frm[i].nodeName == "INPUT") {
+                    if (frm[i].value.trim() == "")
+                        frm[i].value = "";
+
+                    valid = valid && (frm[i].validity.valid);
+                }
+            }
+            return valid;
+        }
+
+        async function Search() {
+            var city = document.getElementById('searchInput').value;
+            var response = await fetch(`/weatherforecast/Search?city=${encodeURIComponent(city)}`, {
+                method: 'GET',
+            });
+            if (response.ok) {
+                var cities = await response.json();
+                if (!(cities == null || cities.length == 0)) {
+                    var ol = document.getElementsByTagName('ol')[0];
+                    var olHtml = '';//'<li><a data-portno="1" href="#">Tel Aviv</a></li>\n';
+                    for (var i = 0; i < cities.length; i++) {
+                        olHtml = olHtml + `<li><a href="javascript:ShowCurrentWeather('${cities[i].key}', '${cities[i].localizedName}')">${cities[i].localizedName}</a></li>\n`;
+                    }
+
+                    ol.innerHTML = olHtml;
+                }
+                else
+                    alert("Wrong search input.");
+            } else 
+                alert('Wrong search input.');
+            
+        }
+
+
+        async function ShowCurrentWeather(cityKey, localizedName) {
+            
+            var response = await fetch(`/weatherforecast/GetCurrentWeather?cityKey=${encodeURIComponent(cityKey)}`, {
+                method: 'GET',
+            });
+            if (response.ok) {
+                var currentWeather = await response.json();
+                if (currentWeather != null) {
+                    var celsiusLb = document.getElementById('celsiusLb');
+                    var weatherLb = document.getElementById('weatherLb');
+                    var cityLb = document.getElementById('cityLb');
+
+                    celsiusLb.innerHTML = currentWeather.temperatureCV;
+                    weatherLb.innerHTML = currentWeather.weatherText;
+                    cityLb.innerHTML = localizedName;
+                    cityLb.attributes["data-cityKey"].value = cityKey;
+                }
+                else
+                    alert("Server error.");
+            } else 
+                alert('Server error.');
+            
+        }
+
+
+        var addToFavoritesBtn = document.getElementById("addToFavorites");
+        addToFavoritesBtn.addEventListener("click", AddToFavoritesHandler);
+
+        async function AddToFavoritesHandler(event) {
+            var cityLb = document.getElementById('cityLb');
+            var cityKey = cityLb.attributes["data-cityKey"].value;
+            if (cityKey === "")
+                return;
+            var localizedName = cityLb.innerHTML;
+
+
+            await AddToFavorites(cityKey, localizedName);
+
+        }
+
+        async function AddToFavorites(cityKey, localizedName) {
+            var response = await fetch('/weatherforecast/AddToFavorites', {
+                method: 'POST',
+                body: `cityKey=${cityKey}&localizedName=${encodeURIComponent(localizedName)}`,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+            if (response.ok) {
+                var msg = await response.text();
+                if (msg === "") {
+                    alert("The favorite sity is saved.");
+                }
+                else
+                    alert("Server error.");
+            } else 
+                alert('Server error.');
+        }
+
+        async function ShowFaforitesPage() {
+            history.replaceState({ state: 1 }, "Main", location.toLocaleString());
+            document.getElementById('pageName').innerHTML = "Faforites";
+            ClearCurrentWeather();
+
+            var searchCityDiv = document.getElementById('addPortfolio');
+            searchCityDiv.style.visibility = "hidden";  
+            searchCityDiv.style.setProperty("max-height", "0px");
+
+            addToFavoritesBtn.removeEventListener("click", AddToFavoritesHandler);
+            addToFavoritesBtn.addEventListener("click", RemoveFromFavorites);
+            addToFavoritesBtn.innerHTML = "Remove From Favorites"
+
+            var response = await fetch('weatherforecast/GetCityFavorites', {
+                method: 'GET',
+            });
+            if (response.ok) {
+                var cities = await response.json();
+                if (!(cities == null || cities.length == 0)) {
+                    var ol = document.getElementsByTagName('ol')[0];
+                    var olHtml = '';
+                    for (var i = 0; i < cities.length; i++) {
+                        olHtml = olHtml + `<li id='${cities[i].cityKey}' ><a href="javascript:ShowCurrentWeather('${cities[i].cityKey}', '${cities[i].localizedName}')">${cities[i].localizedName}</a></li>\n`;
+                    }
+
+                    ol.innerHTML = olHtml;
+                }
+                else
+                    alert("Server error.");
+            } else 
+                alert("Server error.");
+            
+            history.pushState({state: 2}, "Favorites", location.toLocaleString());
+        }
+
+        async function RemoveFromFavorites (event) {
+            var cityLb = document.getElementById('cityLb');
+            var cityKey = cityLb.attributes["data-cityKey"].value;
+
+            if (cityKey === "")
+                return;
+
+            var response = await fetch('/weatherforecast/DeleteFavorite?cityKey=' + cityKey, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                var msg = await response.text();
+                if (msg === "") {
+                    var aTag = document.getElementById(cityKey);
+                    if (aTag != null) {
+                        aTag.parentElement.removeChild(aTag);
+                        ClearCurrentWeather();
+                    }
+                }
+                else
+                    alert("Server error.");
+            } else
+                alert('Server error.');
+        }
+
+        function ClearCurrentWeather() {
+            document.getElementById('celsiusLb').innerHTML = "";
+            document.getElementById('weatherLb').innerHTML = "";
+            var cityLb = document.getElementById('cityLb');
+            cityLb.innerHTML = "";
+            cityLb.attributes["data-cityKey"].value = "";
+        }
+
+
+        window.onpopstate = function (e) {
+            location.assign("/");
+            //history.state 
+        }
+
+    </script>
+</body>
+</html>
